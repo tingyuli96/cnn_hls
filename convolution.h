@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <ap_axi_sdata.h>
 #include <math.h>
+#include "ap_int.h"
+#include "hls_stream.h"
 typedef ap_axiu<32,1,1,1> AXI_VAL;
 
 #define IN_SIZE 32*32
@@ -124,7 +126,11 @@ template <typename T, int U, int TI, int TD> ap_axiu <sizeof(T)*8,U,TI,TD> push_
 	return e;
 }
 
+//convolutional core
+template<typename T,int K>
+static void convolution_strm(int width, int height, hls::stream<T>  ){
 
+}
 template <typename T, int in_num, int in_DIM, int out_DIM, int k_DIM, int  out_num> \
 void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM * out_num], T bias[out_num], T output[out_num][out_DIM][out_DIM])
 {
@@ -134,7 +140,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 	//float sum;
 	int stride =1 ;
 	float kernel[out_num][in_num][k_DIM][k_DIM];
-	T output_temp[out_num][out_DIM][out_DIM];
+//	T output_temp[out_num][out_DIM][out_DIM];
 
 	const int FACTOR=out_DIM/2;
 
@@ -190,7 +196,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 								//#pragma HLS RESOURCE variable=output core = DSP48
 								#pragma HLS PIPELINE rewind
 								#pragma HLS UNROLL
-								output_temp[to][row][col] += kernel[to][ti][i][j] * input[ti][stride*row+i][stride*col+j];
+								output[to][row][col] += kernel[to][ti][i][j] * input[ti][stride*row+i][stride*col+j];
 //								output[to][row][col] += output_temp[to][row][col];
 						}
 					}
