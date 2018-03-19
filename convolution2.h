@@ -128,11 +128,11 @@ template <typename T, int U, int TI, int TD> ap_axiu <sizeof(T)*8,U,TI,TD> push_
 }
 
 //convolutional core
-/*
+
 template<typename T,int K>
 static void convolution_strm(int width, int height, hls::stream<T> &input, hls::stream<T> &output){
 
-}*/
+}
 
 template <typename T, int in_num, int in_DIM, int out_DIM, int k_DIM, int  out_num> \
 void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM * out_num], T bias[out_num], T output[out_num][out_DIM][out_DIM])
