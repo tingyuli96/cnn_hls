@@ -128,11 +128,11 @@ template <typename T, int U, int TI, int TD> ap_axiu <sizeof(T)*8,U,TI,TD> push_
 }
 
 //convolutional core
-
+/*
 template<typename T,int K>
 static void convolution_strm(int width, int height, hls::stream<T> &input, hls::stream<T> &output){
 
-}
+}*/
 
 template <typename T, int in_num, int in_DIM, int out_DIM, int k_DIM, int  out_num> \
 void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM * out_num], T bias[out_num], T output[out_num][out_DIM][out_DIM])
@@ -142,12 +142,13 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 	float em;
 	//float sum;
 	int stride =1 ;
-	float kernel[out_num][in_num][k_DIM][k_DIM];
-	T output_temp[out_num][out_DIM][out_DIM];
+    float kernel[out_num][in_num][k_DIM][k_DIM];
+
+    T output_temp[out_num][out_DIM][out_DIM];
 
 	const int FACTOR=out_DIM/2;
 
-/*#pragma HLS ARRAY_PARTITION variable=kernel block factor=5 dim=0 partition*/
+//#pragma HLS ARRAY_PARTITION variable=kernel block factor=5 dim=0 partition
 //#pragma HLS ARRAY_PARTITION variable=kernel block factor=5 dim=4 partition
 
 /*#pragma HLS ARRAY_PARTITION variable=input block factor=5 dim=3 partition*/
@@ -156,7 +157,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 #pragma HLS ARRAY_PARTITION variable=output cyclic factor=FACTOR dim=2 partition
 #pragma HLS ARRAY_PARTITION variable=output cyclic factor=FACTOR dim=3 partition
 */
-
+//#pragma HLS resource variable=kernel core=
 
 
 	//Changing the data structure for weights and biases.
@@ -166,6 +167,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 //#pragma UNROLL#
 				for(int j=0; j<k_DIM; j++)
 				{
+
 					kernel[to][ti][i][j] = weights[j+i*k_DIM+ti*k_DIM*k_DIM+to*k_DIM*k_DIM*in_num];
 				}
 
@@ -199,7 +201,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 								//#pragma HLS RESOURCE variable=output core = DSP48
 								#pragma HLS PIPELINE rewind
 //								#pragma HLS UNROLL
-								output[to][row][col] = kernel[to][ti][i][j] * input[ti][stride*row+i][stride*col+j];
+								output[to][row][col] += kernel[to][ti][i][j] * input[ti][stride*row+i][stride*col+j];
 //								output[to][row][col] += output_temp[to][row][col];
 						}
 					}
