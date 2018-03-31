@@ -1,3 +1,7 @@
+/**********************************************/
+//this test used row stationary in convolutional layer
+/********************************************/
+
 #include <assert.h>
 #include <ap_axi_sdata.h>
 #include <math.h>
@@ -128,11 +132,38 @@ template <typename T, int U, int TI, int TD> ap_axiu <sizeof(T)*8,U,TI,TD> push_
 }
 
 //convolutional core
-/*
+#define MAX_IMG_COLS 28
+#define MAX_IMG_ROWS 28
+#define K 5
 template<typename T,int K>
-static void convolution_strm(int width, int height, hls::stream<T> &input, hls::stream<T> &output){
+static void convolution_strm(int width, int height, hls::stream<T> &kernel, hls::stream<T> &input, 
+	hls::stream<T> &output, const T *hcoeff, const T *vcoeff){
 
-}*/
+	// hls::stream<T> hconv("hconv");
+	// hls::stream<T> vconv("vconv"); 	//what's the meaning of this?
+	// These assertions let HLS know the upper bounds of loops
+	assert(height < MAX_IMG_ROWS);
+	assert(width < MAX_IMG_COLS);
+	assert(vconv_xlim < MAX_IMG_COLS - (K - 1));
+	// Horizontal convolution
+	for(int col = 0; col < height; col++) {
+		for(int row = 0; row < width; row++) {
+			for(int i = 0; i < K; i++) {
+				 
+	}
+	}
+	}
+	// Vertical convolution
+	VConvH:for(int col = 0; col < height; col++) {
+	VConvW:for(int row = 0; row < vconv_xlim; row++) {
+	VConv:for(int i = 0; i < K; i++) {
+	}
+	}
+	Border:for (int i = 0; i < height; i++) {
+	for (int j = 0; j < width; j++) {
+	}
+
+}
 
 template <typename T, int in_num, int in_DIM, int out_DIM, int k_DIM, int  out_num> \
 void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM * out_num], T bias[out_num], T output[out_num][out_DIM][out_DIM])
@@ -143,7 +174,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 	//float sum;
 	int stride =1 ;
 	float kernel[out_num][in_num][k_DIM][k_DIM];
-//	T output_temp[out_num][out_DIM][out_DIM];
+	T output_temp[out_num][out_DIM][out_DIM];
 
 	const int FACTOR=out_DIM/2;
 
@@ -161,11 +192,13 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 
 	//Changing the data structure for weights and biases.
 	for(int to=0; to<out_num; to++)
+	//	#pragma HLS DATAFLOW
 		for (int ti = 0; ti < in_num; ti++)
 			for(int i=0; i<k_DIM; i++)
 //#pragma UNROLL#
 				for(int j=0; j<k_DIM; j++)
 				{
+					 #pragma HLS loop_flatten
 					kernel[to][ti][i][j] = weights[j+i*k_DIM+ti*k_DIM*k_DIM+to*k_DIM*k_DIM*in_num];
 				}
 
@@ -177,6 +210,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 		for(int j=0; j< out_DIM; j++)
 			for(int k=0; k<out_DIM; k++)
 			{
+				#pragma HLS loop_flatten
 				output[i][j][k] = 0;
 //				output_temp[i][j][k] = 0;
 			}
@@ -186,6 +220,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 
 
 		for(int to=0; to<out_num; to++){
+			#pragma HLS DATAFLOW
 			for(int ti=0; ti<in_num; ti++){
 				for(int row=0; row<out_DIM; row++){
 					//#pragma HLS UNROLL

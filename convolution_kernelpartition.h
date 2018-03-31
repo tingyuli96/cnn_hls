@@ -148,7 +148,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 
 	const int FACTOR=out_DIM/2;
 
-//#pragma HLS ARRAY_PARTITION variable=kernel block factor=5 dim=0 partition
+#pragma HLS ARRAY_PARTITION variable=kernel block factor=5 dim=3 partition
 //#pragma HLS ARRAY_PARTITION variable=kernel block factor=5 dim=4 partition
 
 /*#pragma HLS ARRAY_PARTITION variable=input block factor=5 dim=3 partition*/

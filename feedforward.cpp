@@ -6,7 +6,7 @@
 #define INPUTSIZE 1024
 #define OUTPUTSIZE 10
 
-#include "convolution_weig.h"
+#include "convolution_merge.h"
 
 void CNN_Accel (AXI_VAL INPUT_STREAM[WEIGHTSIZE], AXI_VAL OUTPUT_STREAM[OUTPUTSIZE])
 {

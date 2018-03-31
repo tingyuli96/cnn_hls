@@ -1,3 +1,7 @@
+/****************************************/
+//note: this change doesn't make latency better
+/***************************************/
+
 #include <assert.h>
 #include <ap_axi_sdata.h>
 #include <math.h>
@@ -14,12 +18,14 @@ typedef ap_axiu<32,1,1,1> AXI_VAL;
 #define OUTPUTSIZE 10
 
 	float input_image[1][32][32];
-	float layerOutput1[6][28][28];
+	// float layerOutput1[6][28][28];
 	float layerOutput2[6][14][14];
-	float layerOutput3[16][10][10];
+	// float layerOutput3[16][10][10];
 	float layerOutput4[16][5][5];
-	float layerOutput5[120][1][1];
+	// float layerOutput5[120][1][1];
 	float layerOutput6[10];
+	float layerOutput[120][28][28];
+
 	//Load and rearrange weights*/
 
 	float weights_layer1[150];
@@ -135,15 +141,16 @@ static void convolution_strm(int width, int height, hls::stream<T> &input, hls::
 }*/
 
 template <typename T, int in_num, int in_DIM, int out_DIM, int k_DIM, int  out_num> \
-void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM * out_num], T bias[out_num], T output[out_num][out_DIM][out_DIM])
+void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM * out_num], T bias[out_num], T output[120][28][28])
 {
+#pragma HLS ARRAY_PARTITION variable=layerOutput block factor=120 dim=1
 
  	float ep;
 	float em;
 	//float sum;
 	int stride =1 ;
 	float kernel[out_num][in_num][k_DIM][k_DIM];
-	T output_temp[out_num][out_DIM][out_DIM];
+	// T output_temp[out_num][out_DIM][out_DIM];
 
 	const int FACTOR=out_DIM/2;
 
@@ -199,7 +206,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM * k_DIM *
 								//#pragma HLS RESOURCE variable=output core = DSP48
 								#pragma HLS PIPELINE rewind
 //								#pragma HLS UNROLL
-								output[to][row][col] = kernel[to][ti][i][j] * input[ti][stride*row+i][stride*col+j];
+								output[to][row][col] += kernel[to][ti][i][j] * input[ti][stride*row+i][stride*col+j];
 //								output[to][row][col] += output_temp[to][row][col];
 						}
 					}
@@ -232,8 +239,9 @@ for(int to=0; to<out_num; to++)
 
 
  template <typename T, int in_num, int in_DIM, int stride> \
- void maxPoolLayer(T input[in_num][in_DIM][in_DIM], T output[in_num][in_DIM/2][in_DIM/2])
+ void maxPoolLayer(T input[120][28][28], T output[in_num][in_DIM/2][in_DIM/2])
  {
+#pragma HLS ARRAY_PARTITION variable=layerOutput block factor=120 dim=1
  	//insert max pool size
 	float ep;
 	float em;
@@ -268,8 +276,9 @@ for(int to=0; to<out_num; to++)
 		}
  }
 
- template <typename T, int in_num, int out_num>void fullyConnectedLayer(T input[in_num][1][1], T kernel[in_num*out_num], T bias[out_num], T output[out_num])
+ template <typename T, int in_num, int out_num>void fullyConnectedLayer(T input[in_num][28][28], T kernel[in_num*out_num], T bias[out_num], T output[out_num])
 {
+#pragma HLS ARRAY_PARTITION variable=layerOutput block factor=120 dim=1
 
 
 	//convert 2D to 1D
@@ -352,18 +361,20 @@ for(int to=0; to<out_num; to++)
  void standalone_conv (float input_image[1][32][32],  float out[10] )
 
  {
+#pragma HLS ARRAY_PARTITION variable=layerOutput block factor=120 dim=1
 
- 	convolutionLayer<float, 1, 32, 28, 5, 6>(input_image, weights_layer1, bias_layer1, layerOutput1);
- 	maxPoolLayer<float, 6, 28, 2>(layerOutput1, layerOutput2);
- 	convolutionLayer<float, 6, 14, 10, 5, 16>(layerOutput2, weights_layer3, bias_layer3, layerOutput3);
- 	maxPoolLayer<float, 16, 10, 2>(layerOutput3, layerOutput4);
- 	convolutionLayer<float, 16, 5, 1, 5, 120>(layerOutput4, weights_layer5, bias_layer5, layerOutput5);
- 	fullyConnectedLayer<float, 120, 10>(layerOutput5, weights_layer6, bias_layer6, out);
+ 	convolutionLayer<float, 1, 32, 28, 5, 6>(input_image, weights_layer1, bias_layer1, layerOutput);
+ 	maxPoolLayer<float, 6, 28, 2>(layerOutput, layerOutput2);
+ 	convolutionLayer<float, 6, 14, 10, 5, 16>(layerOutput2, weights_layer3, bias_layer3, layerOutput);
+ 	maxPoolLayer<float, 16, 10, 2>(layerOutput, layerOutput4);
+ 	convolutionLayer<float, 16, 5, 1, 5, 120>(layerOutput4, weights_layer5, bias_layer5, layerOutput);
+ 	fullyConnectedLayer<float, 120, 10>(layerOutput, weights_layer6, bias_layer6, out);
 
  }
 
  void accelerator(AXI_VAL inputstream[1024], AXI_VAL outputstream[10])
  {
+#pragma HLS ARRAY_PARTITION variable=layerOutput block factor=120 dim=1
 float input[1][32][32];
 float output[10];
 
