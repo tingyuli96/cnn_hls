@@ -131,6 +131,12 @@ template <typename T, int U, int TI, int TD> ap_axiu <sizeof(T)*8,U,TI,TD> push_
 	return e;
 }
 
+//processing element
+template<typename T> void pe(T &inMap, T &filter, T &outMap){
+	T psum = outMap;
+	
+	return 0
+}
 //convolutional core
 #define MAX_IMG_COLS 28
 #define MAX_IMG_ROWS 28
@@ -139,6 +145,8 @@ template<typename T,int K>
 static void convolution_strm(int width, int height, hls::stream<T> &kernel, hls::stream<T> &input, 
 	hls::stream<T> &output, const T *hcoeff, const T *vcoeff){
 
+	float in_var;
+	float filter_var;
 	// hls::stream<T> hconv("hconv");
 	// hls::stream<T> vconv("vconv"); 	//what's the meaning of this?
 	// These assertions let HLS know the upper bounds of loops
@@ -149,7 +157,7 @@ static void convolution_strm(int width, int height, hls::stream<T> &kernel, hls:
 	for(int col = 0; col < height; col++) {
 		for(int row = 0; row < width; row++) {
 			for(int i = 0; i < K; i++) {
-				 
+				 hls::stream 
 	}
 	}
 	}
