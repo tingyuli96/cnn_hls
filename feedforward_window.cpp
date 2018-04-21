@@ -6,9 +6,9 @@
 #define INPUTSIZE 1024
 #define OUTPUTSIZE 10
 
-#include "convolution_RS_re302.h"
+#include "convolution_window.h"
 
-void CNN_Accel_RS (AXI_VAL INPUT_STREAM[WEIGHTSIZE], AXI_VAL OUTPUT_STREAM[OUTPUTSIZE])
+void CNN_Accel_WD (AXI_VAL INPUT_STREAM[WEIGHTSIZE], AXI_VAL OUTPUT_STREAM[OUTPUTSIZE])
 {
 #pragma HLS INTERFACE ap_ctrl_none port=return
 	//#pragma HLS INTERFACE ap_ctrl_none port=return
