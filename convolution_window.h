@@ -1,13 +1,10 @@
-/**********************************************/
-//this test used row stationary in convolutional layer
-/********************************************/
-#ifndef CONVOLUTION_RS_H
-#define CONVOLUTION_RS_H
 #include <assert.h>
 #include <ap_axi_sdata.h>
 #include <math.h>
 #include "ap_int.h"
-#include "hls_stream.h"
+//#include "hls_stream.h"
+#include "hls_video.h"
+
 //#include "cmath"
 typedef ap_axiu<32,1,1,1> AXI_VAL;
 
@@ -132,77 +129,12 @@ template <typename T, int U, int TI, int TD> ap_axiu <sizeof(T)*8,U,TI,TD> push_
 	return e;
 }
 
-//processing element
-/*
-template<typename T>
-void pe(T input, T filter, T &output){
-
-	T mul_result;
-	static T psum;
-
-		mul_result = input * filter;
-		psum += mul_result;
-		output = psum;
-	
-	return;
-}*/
-/*
-
-template<typename T,int in_num, int in_DIM, int out_DIM, int k_DIM, int out_num>
-void arrayConv(hls::stream<T> &kernel, hls::stream<T> &input, hls::stream<T> &output, int sel){
-	T input_var;
-	T kernel_var;
-
-	T mul_result;
-	static T psum;
-	if(sel == 1){
-		mul_result = input_var * kernel_var;
-		psum += mul_result;
-		outMap = psum;
-	}
-	
-	
-	return;
-}*/
-/*
 //convolutional core
-#define MAX_IMG_COLS 28
-#define MAX_IMG_ROWS 28
-#define K 5
+/*
 template<typename T,int K>
-static void convolution_strm(int width, int height, hls::stream<T> &kernel, hls::stream<T> &input, 
-	hls::stream<T> &output, const T *hcoeff, const T *vcoeff){
+static void convolution_strm(int width, int height, hls::stream<T> &input, hls::stream<T> &output){
 
-	float in_var;
-	float filter_var;
-	// hls::stream<T> hconv("hconv");
-	// hls::stream<T> vconv("vconv"); 	//what's the meaning of this?
-	// These assertions let HLS know the upper bounds of loops
-	assert(height < MAX_IMG_ROWS);
-	assert(width < MAX_IMG_COLS);
-	assert(vconv_xlim < MAX_IMG_COLS - (K - 1));
-	// Horizontal convolution
-	for(int col = 0; col < height; col++) {
-		for(int row = 0; row < width; row++) {
-			for(int i = 0; i < K; i++) {
-				 hls::stream 
-	}
-	}
-	}
-	// Vertical convolution
-	VConvH:for(int col = 0; col < height; col++) {
-	VConvW:for(int row = 0; row < vconv_xlim; row++) {
-	VConv:for(int i = 0; i < K; i++) {
-	}
-	}
-	Border:for (int i = 0; i < height; i++) {
-	for (int j = 0; j < width; j++) {
-	}
-
-}
-*/
-//pe array
-
+}*/
 template <typename T, int in_num, int in_DIM, int out_DIM, int k_DIM, int  out_num> \
 void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* out_num], T bias[out_num], T output[out_num][out_DIM][out_DIM])
 {
@@ -220,16 +152,16 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* o
 	int stride =1 ;
 	T kernel[out_num][in_num][k_DIM][k_DIM];
 	// T kernel_fifo[out_num][in_num][k2_DIM];
-	#pragma HLS STREAM variable=kernel depth=5 dim=4
+//	#pragma HLS STREAM variable=kernel depth=5 dim=4
 
 	hls::Window<5,5,float> input_buff;
 
 	// T *inp;		//pointer of input_fifo
-	T psum[pe_ROW][out_DIM];
-	T mul_result[pe_ROW][out_DIM];
+//	T psum[pe_ROW][out_DIM];
+//	T mul_result[pe_ROW][out_DIM];
 	// T output_temp[out_num][out_DIM][out_DIM];
-	T output_buff[];
-	T output_sm_buff[col];
+//	T output_buff[];
+	T output_sm_buff[out_DIM];
 
 //	assert(flag<16);
 //	assert(pe_ROW < 51);
@@ -249,18 +181,14 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* o
 */
 
 	//Changing the data structure for weights and biases.
-	Kernel1:for(int to=0; to<out_num; to++){
-		#pragma HLS LOOP_MERGE
-	//	#pragma HLS DATAFLOW
-		#pragma HLS PIPELINE
-		Kernel2:for (int ti = 0; ti < in_num; ti++){
-			Kernel3:for(int i=0; i<k_DIM;i++){
-				Kernel4:for(int j = 0; j<k_DIM; j++)
-					#pragma HLS loop_flatten
-					kernel[to][ti][i][j] = weights[j+i*k_DIM+ti*k2_DIM+to*k2_DIM*in_num];
+	k1:for(int to=0; to<out_num; to++)
+		k2:for (int ti = 0; ti <in_num; ti++)
+			k3:for(int i=0; i<k_DIM; i++)
+//#pragma UNROLL#
+				k4:for(int j=0; j< k_DIM; j++)
+				{
+					kernel[to][ti][i][j] = weights[j+i*k_DIM+ti*k_DIM*k_DIM+to*k_DIM*k_DIM*in_num];
 				}
-		}
-	}
 
 
 /*********************************THE BELOW CODE IS TESTED*************************************/
@@ -280,39 +208,69 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* o
 //	for(int tflag=0;tflag<15;tflag++){
 //		if(tflag < flag){
 //		#pragma HLS DATAFLOW
-		
+
 //#pragma HLS DATAFLOW
 
-		
-	con_innum:for(int ti=0;ti<in_num;ti++){		
-		#pragma HLS PIPELINE
-		//initial of window map	
+	int toc = 0;
+	// float input_insert[3];
+	con_innum:for(int ti=0;ti<in_num;ti++){
+//		#pragma HLS PIPELINE
+		//initial of window map
 		init_inputcol: for(int i=0; i<k_DIM; i++){
 				inti_inputrow: for(int j=0; j<k_DIM; j++){
-					input_buff.insert(input[ti][i][j], i, j)
+					#pragma HLS UNROLL
+					input_buff.insert(input[ti][i][j], i, j);
 				}
 			}
-		con_outdimrow:for(int tor=0;tor<out_DIM;tor++){	
-			con_kernelrow: for(int tkr=0; tkr< k_DIM; tkr=tkr++){
-				con_outdimcol:for(int toc=0; toc<out_DIM; toc++){
-					if(tkr%2==0||tkc!=0){
+		con_outdimrow:for(int tor=0;tor<out_DIM;tor++){
+//			#pragma HLS PIPELINE
+			input_buff.shift_down();
+			for(int iis=0; iis<k_DIM; iis++){
+				// #pragma HLS UNROLL
+				input_buff.insert(input[ti][tor+k_DIM-1][toc+iis],k_DIM-1, iis);
+			}
+
+			if(tor%2 == 0){
+				con_outdimcoleven:for(toc=0; toc<out_DIM; toc++){
+					if(toc!=0){
 						input_buff.shift_right();
-						input_buff.insert_left(input[ti][tor:(tor+k_DIM-1)][toc+k_DIM-1]);
+						for(int iis=0; iis<k_DIM; iis++){
+							// #pragma HLS UNROLL
+							input_buff.insert(input[ti][tor+iis][toc+k_DIM-1],iis,k_DIM-1);
+						}
 					}
-					else if(tkr%2==1||tkc!=out_DIM){
+					con_kernelroweven: for(int tkr=0; tkr< k_DIM; tkr=tkr++){
+						con_kernelcoleven: for(int tkc=0; tkc<k_DIM; tkc++){
+							con_outnumeven:for(int to=0; to<out_num; to++){
+								// #pragma HLS UNROLL
+								output[to][tor][toc] += input_buff.getval(tkr,tkc) * kernel[to][ti][tkc][tkr];
+							}
+						}
+					}
+				}
+			}
+			if(tor%2 == 1){
+				con_outdimcolodd: for(toc=out_DIM; toc>0; toc--){
+					if(toc != out_DIM){
 						input_buff.shift_left();
-						input_buff.insert_left()
+						for(int iis=0; iis<k_DIM; iis++){
+							// #pragma HLS UNROLL
+							input_buff.insert(input[ti][tor+iis][toc-1],iis,0);
+						}
 					}
-					
-					con_kernelcol: for(int tkc=0; tkc<k_DIM; tkc++){
-						con_outnum:for(int to=0; to<out_num; to++){
-							output[to][tir][tpe_col] += input_buff.getval(tkr,tkc) * kernel[to][ti][tkc][tkr];
+					con_kernelrowodd: for(int tkr=0; tkr< k_DIM; tkr=tkr++){
+						con_kernelcolodd: for(int tkc=0; tkc<k_DIM; tkc++){
+							con_outnumodd:for(int to=0; to<out_num; to++){
+								// #pragma HLS UNROLL
+								output[to][tor][toc] += input_buff.getval(tkr,tkc) * kernel[to][ti][tkc][tkr];
+							}
+						}
 					}
+
 				}
 			}
 		}
 
-		}
 	}
 //		}
 //		else
@@ -325,7 +283,7 @@ softmax1:for(int to=0; to<out_num; to++)
 	//#pragma HLS UNROLL
 	softmax2:for(int row=0; row< out_DIM; row ++)
 		//#pragma HLS UNROLL
-	#pragma HLS PIPELINE
+	// #pragma HLS PIPELINE
 		softmax3:for(int col=0; col< out_DIM; col ++)
 		{
 //			#pragma HLS DATAFLOW
@@ -343,144 +301,6 @@ softmax1:for(int to=0; to<out_num; to++)
 
 		}
  }
-
-//template <typename T, int in_num, int in_DIM, int out_DIM, int k_DIM, int  out_num> \
-//void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* out_num], T bias[out_num], T output[out_num][out_DIM][out_DIM])
-//{
-//	const int k2_DIM=k_DIM*k_DIM;
-//	const int FACTOR=out_DIM/2;
-//	// const int pe_col=in_DIM-k_DIM+1; //pe_col = out_DIM
-////	int pe_ROW;
-////	int flag;
-//
-//
-////	pe_ROW = out_num;
-// 	float ep;
-//	float em;
-//	//float sum;
-//	int stride =1 ;
-//	T kernel[out_num][in_num][k_DIM][k_DIM];
-//	// T kernel_fifo[out_num][in_num][k2_DIM];
-//	#pragma HLS STREAM variable=kernel depth=5 dim=4
-//
-//	// T input_fifo[in_DIM];
-//	// T *inp;		//pointer of input_fifo
-//	T psum[out_num][out_DIM];
-//	T mul_result[out_num][out_DIM];
-//	// T output_temp[out_num][out_DIM][out_DIM];
-//
-////	assert(flag<16);
-////	assert(pe_ROW < 51);
-//
-//#pragma HLS DATAFLOW
-//
-////#pragma HLS ARRAY_PARTITION variable=kernel block factor=5 dim=3 partition
-//
-/////*#pragma HLS ARRAY_PARTITION variable=kernel block factor=5 dim=0 partition*/
-////#pragma HLS ARRAY_PARTITION variable=kernel block factor=5 dim=4 partition
-//
-///*#pragma HLS ARRAY_PARTITION variable=input block factor=5 dim=3 partition*/
-///*
-//#pragma HLS ARRAY_PARTITION variable=output cyclic factor=FACTOR dim=1 partition
-//#pragma HLS ARRAY_PARTITION variable=output cyclic factor=FACTOR dim=2 partition
-//#pragma HLS ARRAY_PARTITION variable=output cyclic factor=FACTOR dim=3 partition
-//*/
-//
-//	//Changing the data structure for weights and biases.
-//	Kernel_loop1:for(int to=0; to<out_num; to++){
-//	//	#pragma HLS DATAFLOW
-//		Kernel_loop2:for (int ti = 0; ti < in_num; ti++){
-//			Kernel_loop3:for(int i=0; i<k_DIM;i++){
-//				Kernel_loop4:for(int j = 0; j<k_DIM; j++)
-//					#pragma HLS loop_flatten
-//					kernel[to][ti][i][j] = weights[j+i*k_DIM+ti*k2_DIM+to*k2_DIM*in_num];
-//				}
-//		}
-//	}
-//
-//
-///*********************************THE BELOW CODE IS TESTED*************************************/
-//
-//	Output_loop1:for(int i=0; i< out_num; i++)
-//		Output_loop2:for(int j=0; j< out_DIM; j++)
-//			Output_loop3:for(int k=0; k<out_DIM; k++)
-//			{
-//				#pragma HLS loop_flatten
-//				output[i][j][k] = 0;
-////				output_temp[i][j][k] = 0;
-//			}
-//
-//	/*************pearray TESTED**********************/
-////	for(int tflag=0;tflag<15;tflag++){
-////		if(tflag < flag){
-////		#pragma HLS DATAFLOW
-//		Conv_innum:for(int ti=0;ti<in_num;ti++){
-////#pragma HLS DATAFLOW
-//			Conv_outDIMrow:for(int tir=0;tir<out_DIM;tir++){//count for the row of input map
-//				//initialize of psum
-//				Conv_psuminit_outnum:for(int to=0;to<out_num;to++){
-//					#pragma HLS UNROLL
-//					Conv_psuminit_outDIMcol:for(int tpe_col=0;tpe_col<out_DIM;tpe_col++)
-//						psum[to][tpe_col] = 0;
-//				}
-//				//out_num*out_DIM pe array
-//
-//				Conv_kDIMrow:for(int tr=tir;tr<k_DIM;tr++){//count for kernel row
-//					/*
-//					Conv_inputinit_kDIMcol:for(int tf=0;tf<in_DIM;tf++){//fill up input fifo
-////						#pragma HLS UNROLL
-//						input_fifo[tf] = input[ti][tr][tf];
-//						}*/
-//					Conv_outnum:for(int to=0;to<out_num;to++){//finish col conv
-//						#pragma HLS PIPELINE
-//						Conv_outDIMcol:for(int tpe_col=0;tpe_col<out_DIM;tpe_col++)//implement col array
-//						{
-//							#pragma HLS UNROLL
-////							Conv_kernelrow:for(int i=0;i<k_DIM;i++){
-//								Conv_kernelcol:for(int j=0; j<k_DIM; j++){
-//									//element of pe
-//									mul_result[to][tpe_col] = input[ti][tir+tr][tpe_col+j] * kernel[to][ti][tr][j];
-//									psum[to][tpe_col] += mul_result[to][tpe_col];
-//									//end of pe
-//									output[to][tir][tpe_col] = psum[to][tpe_col];
-//
-//								}
-//
-////							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//
-////		}
-////		else
-////			break;
-////	}
-//
-//
-//Softmax_outnum:for(int to=0; to<out_num; to++)
-//	//#pragma HLS UNROLL
-//	Softmax_outDIMrow:for(int row=0; row< out_DIM; row ++)
-//		//#pragma HLS UNROLL
-//		#pragma HLS PIPELINE
-//		Softmax_outrol:for(int col=0; col< out_DIM; col ++)
-//		{
-////			#pragma HLS DATAFLOW
-//			/*
-//			#pragma HLS RESOURCE variable=ep core=FExp_fulldsp THIS DOES NOT WORK: WARNING ISSUED IS - Cannot apply functional unit due to incompatible operation sets
-//			#pragma HLS RESOURCE variable=em core=FExp_fulldsp
-//			*/
-//			//#pragma HLS RESOURCE variable=output core = DSP48
-//			#pragma HLS PIPELINE rewind
-//			#pragma HLS UNROLL
-//			output[to][row][col] += bias[to];
-//			ep = exp(output[to][row][col]);
-//			em = exp(-output[to][row][col]);
-//			output[to][row][col] = (ep-em)/(ep+em);
-//
-//		}
-// }
 
 
  template <typename T, int in_num, int in_DIM, int stride> \
@@ -604,7 +424,6 @@ softmax1:for(int to=0; to<out_num; to++)
  void standalone_conv (float input_image[1][32][32],  float out[10] )
 
  {
-//#pragma HLS PIPELINE
 
  	convolutionLayer<float, 1, 32, 28, 5, 6>(input_image, weights_layer1, bias_layer1, layerOutput1);
  	maxPoolLayer<float, 6, 28, 2>(layerOutput1, layerOutput2);
@@ -642,4 +461,3 @@ for(int i=0; i<10; i++)
  }
 
 
-#endif

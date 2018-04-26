@@ -224,8 +224,8 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* o
 
 	T input_fifo[in_DIM];
 	// T *inp;		//pointer of input_fifo
-	T psum[pe_ROW][out_DIM];
-	T mul_result[pe_ROW][out_DIM];
+//	T psum[pe_ROW][out_DIM];
+//	T mul_result[pe_ROW][out_DIM];
 	// T output_temp[out_num][out_DIM][out_DIM];
 
 //	assert(flag<16);
@@ -283,12 +283,12 @@ output2:for(int j=0; j< out_DIM; j++)
 //#pragma HLS DATAFLOW
 			con_outdimrow:for(int tir=0;tir<out_DIM;tir++){//count for the row of input map
 				//initialize of psum
-				#pragma HLS PIPELINE
-				con_pe_outnumrow:for(int to=0;to<pe_ROW;to++){
-					#pragma HLS UNROLL
-					con_pe_outnumcol:for(int tpe_col=0;tpe_col<out_DIM;tpe_col++)
-						psum[to][tpe_col] = 0;
-				}
+//				#pragma HLS PIPELINE
+//				con_pe_outnumrow:for(int to=0;to<pe_ROW;to++){
+//					#pragma HLS UNROLL
+//					con_pe_outnumcol:for(int tpe_col=0;tpe_col<out_DIM;tpe_col++)
+//						psum[to][tpe_col] = 0;
+//				}
 				//out_num*out_DIM pe array
 				con_kernelrow:for(int tr=0;tr<k_DIM;tr++){//count for kernel row
 					con_input_col:for(int tf=0;tf<in_DIM;tf++){//fill up input fifo
@@ -302,10 +302,10 @@ output2:for(int j=0; j< out_DIM; j++)
 							#pragma HLS UNROLL
 							con_kernelcol:for(int i=0;i<k_DIM;i++){
 								//element of pe
-								mul_result[to][tpe_col] = input_fifo[tpe_col+i] * kernel[to][ti][tr][i];
-								psum[to][tpe_col] += mul_result[to][tpe_col];
-								//end of pe
-								output[to][tir][tpe_col] = psum[to][tpe_col];
+								output[to][tir][tpe_col] += input_fifo[tpe_col+i] * kernel[to][ti][tr][i];
+//								psum[to][tpe_col] += mul_result[to][tpe_col];
+//								//end of pe
+//								output[to][tir][tpe_col] = psum[to][tpe_col];
 							}
 						}
 					}
@@ -332,7 +332,7 @@ softmax1:for(int to=0; to<out_num; to++)
 			#pragma HLS RESOURCE variable=em core=FExp_fulldsp
 			*/
 			//#pragma HLS RESOURCE variable=output core = DSP48
-			#pragma HLS PIPELINE rewind
+			#pragma HLS PIPELINE
 			#pragma HLS UNROLL
 			output[to][row][col] += bias[to];
 			ep = exp(output[to][row][col]);
