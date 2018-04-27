@@ -1,4 +1,5 @@
-
+#define NOTDEBUG
+#ifdef NOTDEBUG
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -29,4 +30,4 @@ void CNN_Accel_RS (AXI_VAL INPUT_STREAM[WEIGHTSIZE], AXI_VAL OUTPUT_STREAM[OUTPU
 
 
 }
-
+#endif

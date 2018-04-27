@@ -7,6 +7,14 @@ using namespace std;
 void ReadFloatsFromFile(float *weightsFromFile, const std::string file_name)
 {
 	char *file;
+	char *buffer;
+	file = (char *)file_name.c_str();
+	std::ifstream fstr(file,std::ios::binary);
+	while(fstr.get(*buffer)){
+
+	}
+
+	fstr.close();
 
 }
 void ReadBytesFromFile(std::stringstream &stream, const std::string file_name)

@@ -18,6 +18,8 @@ typedef ap_axiu<32,1,1,1> AXI_VAL;
 #define INPUTSIZE 1024
 #define OUTPUTSIZE 10
 
+#define NOTDEGUB
+
 	float input_image[1][32][32];
 	float layerOutput1[6][28][28];
 	float layerOutput2[6][14][14];
@@ -77,7 +79,7 @@ typedef ap_axiu<32,1,1,1> AXI_VAL;
 #define offSetL6   offSetL5 + layerWeights5 + layerBias5
 	bool weightsValid = false;
 
-
+#ifdef NOTDEGUB
 
 void CNN_Accel (AXI_VAL INPUT_STREAM[WEIGHTSIZE + INPUTSIZE], AXI_VAL OUTPUT_STREAM[10]);
 void standalone_conv (float input_image[1][32][32], float out[10] );
@@ -202,6 +204,7 @@ static void convolution_strm(int width, int height, hls::stream<T> &kernel, hls:
 }
 */
 //pe array
+#endif
 
 template <typename T, int in_num, int in_DIM, int out_DIM, int k_DIM, int  out_num> \
 void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* out_num], T bias[out_num], T output[out_num][out_DIM][out_DIM])
@@ -293,9 +296,9 @@ output2:for(int j=0; j< out_DIM; j++)
 				con_kernelrow:for(int tr=0;tr<k_DIM;tr++){//count for kernel row
 					con_input_col:for(int tf=0;tf<in_DIM;tf++){//fill up input fifo
 //						#pragma HLS UNROLL
-						input_fifo[tf] = input[ti][tr][tf];
+						input_fifo[tf] = input[ti][tir+tr][tf];
 					}
-					con_outnum:for(int to=0;to<pe_ROW;to++){//finish col conv
+					con_outnum:for(int to=0;to<out_num;to++){//finish col conv
 						#pragma HLS PIPELINE
 						con_outdimcol:for(int tpe_col=0;tpe_col<out_DIM;tpe_col++)//implement col array
 						{
@@ -303,6 +306,9 @@ output2:for(int j=0; j< out_DIM; j++)
 							con_kernelcol:for(int i=0;i<k_DIM;i++){
 								//element of pe
 								output[to][tir][tpe_col] += input_fifo[tpe_col+i] * kernel[to][ti][tr][i];
+#ifdef DEBUG
+								cout << "output["<<to<<"]["<<tir<<"]["<<tpe_col<<"="<<ouput[to][tir][tpe_col]<<endl;
+#endif
 //								psum[to][tpe_col] += mul_result[to][tpe_col];
 //								//end of pe
 //								output[to][tir][tpe_col] = psum[to][tpe_col];
@@ -480,7 +486,7 @@ softmax1:for(int to=0; to<out_num; to++)
 //		}
 // }
 
-
+#ifdef NOTDEGUB
  template <typename T, int in_num, int in_DIM, int stride> \
  void maxPoolLayer(T input[in_num][in_DIM][in_DIM], T output[in_num][in_DIM/2][in_DIM/2])
  {
@@ -639,5 +645,5 @@ for(int i=0; i<10; i++)
 
  }
 
-
+#endif
 #endif
