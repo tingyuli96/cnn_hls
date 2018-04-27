@@ -1,73 +1,41 @@
 
-#define APPL
-//#define ACCL
-#define ARMONLY
-#ifdef APPL
+#include <fstream>
 #include <iostream>
 #include <stdio.h>
-//#include "tiny_cnn/tiny_cnn.h"
-//#include "layersCustom.h"
-//#include "SdReader.h"
 #include <vector>
 #include <malloc.h>
 #include <cmath>
-//#include <xtime_l.h>
-//#include <sys/time.h>
-//#include <xaxidma.h>
-//#include "user_dma.h"
-//#include "xparameters.h"
+
+#include "SdReader.h"
 
 #include "convolution_RS_re302.h"
 
 
 #define SIZE 1024
 
-//	int numOfParameters=51902;
-//	int layerWeights1=150;
-//	int layerWeights3=2400;
-//	int layerWeights5 = 48000;
-//	int layerWeights6 = 1200;
-//
-//	int layerBias1=6;
-//	int layerBias3=16;
-//	int layerBias5=120;
-//	int layerBias6=10;
-//
-//	int offSetL3= layerWeights1+layerBias1;
-//	int offSetL5 = 2572; //offSetL3 + layerWeights3 + layerBias3;
-//	int offSetL6 = offSetL5 + layerWeights5 + layerBias5;
-
-
-
-////	XAxiDma AxiDma;
-//
-//
-//#define DMA_DEV_ID		XPAR_AXIDMA_0_DEVICE_ID
-//
-//#ifndef DDR_BASE_ADDR
-//#define MEM_BASE_ADDR		0x01000000
-//#else
-//#define MEM_BASE_ADDR		(DDR_BASE_ADDR + 0x1000000)
-//#endif
-//#define TX_BUFFER_BASE		(MEM_BASE_ADDR + 0x00100000)
-//#define RX_BUFFER_BASE		(MEM_BASE_ADDR + 0x00300000)
-//#define RX_BUFFER_HIGH		(MEM_BASE_ADDR + 0x004FFFFF)
-//#define IMG_PKT_LEN			SIZE*4
-//#define W_PKT_LEN			numOfParameters*4
-//#define RES_PKT_LEN 		10*4
-//
-//	FATFS FatFs;
 
 using namespace std;
 //static int CheckResult(int i);
 //static int CheckWeightsLoad(void);
-
+//
 float *weightsFromFile = (float *) malloc(numOfParameters*sizeof(float));
 int *test_labels = (int *) malloc(10000 * sizeof(int));
 std::vector<std::vector<float> > test_images;
 int correctPrediction;
-
-
+//
+//float weightsFromFile[numOfParameters];
+//int test_labels[10000];
+//
+//int load_file(){
+//	ifstream fweights("MyFile.bin",std::ios::binary);
+//	fweights.read((char*)weightsFromFile,numOfParameters*sizeof(float));
+//	fweights.close();
+//
+//	ifstream fimages("images.bin",std::ios::binary);
+//
+//	ifstream flabel("labels.bin",std::ios::binary);
+//
+//}
 
 
 int test_net(const std::string& weights)
@@ -87,13 +55,16 @@ int test_net(const std::string& weights)
 	float layerOutput5[120][1][1]; // = (float *) malloc(120 * sizeof(float));
 	float layerOutput6[10];  //= (float *) malloc(10 * sizeof(float));
 
-	printf("Loading data from SD Card... \n");
-//	ReadFloatsFromSDFile(weightsFromFile, "MyFile.bin");
-//	parse_mnist_images("images.bin", &test_images, -1.0, 1.0, 2, 2);
-//	parse_mnist_labels("labels.bin", test_labels);
-//	printf("Data loaded from SD Card...\n");
+//	#ifdef DEBUG
+//		print("start loading data\n");
+//	#endif
+		printf("Loading data from SD Card... \n");
+		ReadFloatsFromFile(weightsFromFile, "MyFile.bin");
+		parse_mnist_images("images.bin", &test_images, -1.0, 1.0, 2, 2);
+		parse_mnist_labels("labels.bin", test_labels);
+		printf("Data loaded from SD Card...\n");
 
-#ifdef ARMONLY
+
 	float weights_layer1[150];
 	float weights_layer3[2400];
 	float weights_layer5[48000];
@@ -140,14 +111,9 @@ int test_net(const std::string& weights)
 	for(int i=0; i<layerBias6; i++){
 		bias_layer6[i] = weightsFromFile[offSetL6 + layerWeights6 + i];
 	}
-#endif
+
 		printf("Data Structure processed...\n");
 
-#ifdef ARMONLY
-
-//		XTime start, end;
-//
-//		XTime_GetTime(&start);
 
 	for(int imageNumber=0; imageNumber< 1; imageNumber++)
 	{
@@ -183,77 +149,16 @@ int test_net(const std::string& weights)
 		if(predictedLabel == img_label) correctPrediction++;
 	}
 
-//	XTime_GetTime(&end);
-//	double time = double(end - start) / COUNTS_PER_SECOND;
-//	printf("Elapsed time excluding data loading is %.2f seconds\n", time);
-
 
 	printf("Neural Network Accuracy is  %f \n", correctPrediction*100.0/10000);
-#endif
+
 
 	return 1;
 }
 
-//
-//static int CheckWeightsLoad(void)
-//{
-//	float *RxPacket;
-//	int Index = 0;
-//	int count = 0;
-//
-//	RxPacket = (float *) RX_BUFFER_BASE;
-//
-//	for(Index = 0; Index < 10; Index++)
-//	{
-//		if (RxPacket[Index] != 0) {
-//			count ++;
-//		}
-//	}
-//	if(count == 0)
-//	printf("Weights loaded into Accelerator....\n");
-//	return XST_SUCCESS;
-//}
-//
-//static int CheckResult(int i)
-//{
-//	float *RxPacket;
-//	int Index = 0;
-//	int maxIndex = 0;
-//
-//	RxPacket = (float *) RX_BUFFER_BASE;
-//	float max;
-//
-//	/* Invalidate the DestBuffer before receiving the data, in case the
-//	 * Data Cache is enabled
-//	 */
-//#ifndef __aarch64__
-//	Xil_DCacheInvalidateRange((UINTPTR)RxPacket, IMG_PKT_LEN);
-//#endif
-//
-//	max = RxPacket[0];
-//	for(Index = 0; Index < 10; Index++)
-//	{
-//		if(RxPacket[Index] > max)
-//		{
-//			max = RxPacket[Index];
-//			maxIndex = Index;
-//
-//		}
-//	}
-//
-//	if(test_labels[i] == maxIndex)
-//	{
-//		correctPrediction++;
-//		//printf("CORRECT PREDICTION of : %d\n", maxIndex);
-//	}
-//	return XST_SUCCESS;
-//}
 
 int main() {
 
-//	XTime testBegin, testEnd;
-//
-//	XTime_GetTime(&testBegin);
 
 	printf ("*******Testing CNN with MNIST Dataset******** \n");
 	int check;
@@ -263,13 +168,10 @@ int main() {
     	printf("DMA ERROR\n");
     }
 
-//    XTime_GetTime(&testEnd);
-//    double diff = double(testEnd - testBegin) / COUNTS_PER_SECOND;
-//    printf("Elapsed time is %.2f seconds\n", diff);
 
     printf("******CNN tested successfully*******\n");
 
 }
-#endif
+
 
 
