@@ -5,6 +5,7 @@
 //#include "hls_stream.h"
 #include "hls_video.h"
 
+//#define DEBUG
 //#include "cmath"
 typedef ap_axiu<32,1,1,1> AXI_VAL;
 
@@ -144,7 +145,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* o
 	int pe_ROW;
 //	int flag;
 
-
+	int flag;
 	pe_ROW = out_num;
  	float ep;
 	float em;
@@ -222,6 +223,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* o
 					input_buff.insert(input[ti][i][j], i, j);
 				}
 			}
+		flag = 0;
 		con_outdimrow:for(int tor=0;tor<out_DIM;tor++){
 //			#pragma HLS PIPELINE
 			input_buff.shift_down();
@@ -229,8 +231,10 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* o
 				// #pragma HLS UNROLL
 				input_buff.insert(input[ti][tor+k_DIM-1][toc+iis],k_DIM-1, iis);
 			}
+//#ifdef DEBUG
 
-			if(tor%2 == 0){
+			if(flag == 0){
+//				flag = 1;
 				con_outdimcoleven:for(toc=0; toc<out_DIM; toc++){
 					if(toc!=0){
 						input_buff.shift_right();
@@ -249,7 +253,9 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* o
 					}
 				}
 			}
-			if(tor%2 == 1){
+#ifdef DEBUG
+			else{
+				flag = 0;
 				con_outdimcolodd: for(toc=out_DIM; toc>0; toc--){
 					if(toc != out_DIM){
 						input_buff.shift_left();
@@ -269,6 +275,7 @@ void convolutionLayer(T input[in_num][in_DIM][in_DIM], T weights[k_DIM* k_DIM* o
 
 				}
 			}
+#endif
 		}
 
 	}
